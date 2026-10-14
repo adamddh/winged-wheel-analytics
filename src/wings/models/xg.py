@@ -18,6 +18,8 @@ from sklearn.calibration import calibration_curve  # noqa: E402
 from sklearn.linear_model import LogisticRegression  # noqa: E402
 from sklearn.metrics import brier_score_loss, log_loss, roc_auc_score  # noqa: E402
 
+from wings.markdown import md_table  # noqa: E402
+
 NUMERIC = ["distance", "log_distance", "angle"]
 BINARY = ["is_rush"]
 # First level of each list is the reference category (absorbed by the intercept).
@@ -49,9 +51,8 @@ SHOTS_SQL = """
 """
 
 
-def load_shots(con: duckdb.DuckDBPyConnection, seasons: list[int] | None = None) -> pd.DataFrame:
-    df = con.execute(SHOTS_SQL).df()
-    return df[df.season.isin(seasons)] if seasons is not None else df
+def load_shots(con: duckdb.DuckDBPyConnection) -> pd.DataFrame:
+    return con.execute(SHOTS_SQL).df()
 
 
 def _raw_features(df: pd.DataFrame) -> pd.DataFrame:
@@ -156,11 +157,6 @@ def plot_calibration(y: np.ndarray, p: np.ndarray, path: Path, title: str) -> li
     ]
 
 
-def _table(df: pd.DataFrame) -> str:
-    head = "| " + " | ".join(df.columns) + " |\n|" + "---|" * len(df.columns)
-    return head + "".join("\n| " + " | ".join(map(str, r)) + " |" for r in df.itertuples(False))
-
-
 def write_model_card(con: duckdb.DuckDBPyConnection, spec: dict, metrics: dict, path: Path):
     """Generated companion to docs/xg_model.md: every number here comes from this run."""
     seasons = ", ".join(map(str, spec["train_seasons"]))
@@ -195,7 +191,7 @@ def write_model_card(con: duckdb.DuckDBPyConnection, spec: dict, metrics: dict, 
     ).df()
     calib = pd.DataFrame(metrics["calibration_test"])
     mp = metrics.get("moneypuck_benchmark_test")
-    mp_table = _table(pd.DataFrame([mp])) if mp else "_not enough matched shots_"
+    mp_table = md_table(pd.DataFrame([mp])) if mp else "_not enough matched shots_"
     path.write_text(f"""# xG model card (generated)
 
 _Written by `make pipeline`; see [docs/xg_model.md](../docs/xg_model.md) for the rationale._
@@ -204,7 +200,7 @@ Trained on {seasons}; evaluated on held-out {spec["test_season"]}.
 
 ## Metrics
 
-{_table(pd.DataFrame([{"split": k, **metrics[k]} for k in ("train", "test")]))}
+{md_table(pd.DataFrame([{"split": k, **metrics[k]} for k in ("train", "test")]))}
 
 ## Benchmark against MoneyPuck (held-out season, identical matched shots)
 
@@ -215,21 +211,21 @@ Trained on {seasons}; evaluated on held-out {spec["test_season"]}.
 Numeric features are standardized (per 1 SD). Reference levels: {spec["reference"]}.
 Intercept {spec["intercept"]:.3f}.
 
-{_table(coefs)}
+{md_table(coefs)}
 
 ## Feature evidence (training seasons)
 
 Rebound timing:
 
-{_table(evidence)}
+{md_table(evidence)}
 
 Rush vs. other shots at the same distance:
 
-{_table(rush)}
+{md_table(rush)}
 
 ## Calibration (held-out deciles)
 
-{_table(calib)}
+{md_table(calib)}
 
 ![calibration](xg_calibration.png)
 """)
@@ -254,8 +250,7 @@ def run(con: duckdb.DuckDBPyConnection, settings, models_dir: Path) -> dict:
     con.unregister("scored")
 
     base_rate = float(train.is_goal.mean())
-    scored_test = shots[shots.season == settings.test_season]
-    y, p = scored_test.is_goal.to_numpy(), scored_test.xg.to_numpy()
+    y, p = test.is_goal.to_numpy(), shots.loc[test.index, "xg"].to_numpy()
     metrics = {
         "train": evaluate(
             train.is_goal.to_numpy(), shots.loc[train.index, "xg"].to_numpy(), base_rate

@@ -26,11 +26,11 @@ class QualityError(RuntimeError):
     pass
 
 
-def _null_rate(table: str, column: str, max_rate: float, where: str = "true") -> Check:
+def _null_rate(table: str, column: str, max_rate: float) -> Check:
     return Check(
         f"{table}.{column} null rate <= {max_rate:.1%}",
         "null_rate",
-        f"select (avg(({column} is null)::int) > {max_rate})::int from {table} where {where}",
+        f"select (avg(({column} is null)::int) > {max_rate})::int from {table}",
     )
 
 
@@ -97,6 +97,13 @@ def base_checks(settings: Settings) -> list[Check]:
         _unique("silver.shifts", "shift_id"),
         _unique("silver.moneypuck_shots", "season, mp_shot_id"),
         _unique("gold.shots", "shot_id"),
+        Check(
+            "no overlapping shifts for the same player",
+            "duplicate_keys",
+            "select count(*) from silver.shifts a join silver.shifts b "
+            "on a.game_id = b.game_id and a.player_id = b.player_id and a.shift_id < b.shift_id "
+            "and a.start_seconds < b.end_seconds and b.start_seconds < a.end_seconds",
+        ),
         _references("silver.plays", "game_id", "silver.games", "game_id"),
         _references("silver.shifts", "game_id", "silver.games", "game_id"),
         _references("silver.shifts", "player_id", "silver.players", "player_id"),

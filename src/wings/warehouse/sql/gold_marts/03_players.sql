@@ -8,16 +8,19 @@ with gp as (
     join silver.games g using (game_id)
     group by all
 ),
+goals as (
+    select season, shooter_id, assist1_id, assist2_id from silver.plays
+    where event_type = 'goal' and period_type <> 'SO'  -- shootout goals aren't credited
+),
 points as (
     select season, player_id, count(*) filter (where role = 'G') as goals,
         count(*) filter (where role = 'A') as assists
     from (
-        select season, shooter_id as player_id, 'G' as role from silver.plays
-        where event_type = 'goal' and period_type <> 'SO'
+        select season, shooter_id as player_id, 'G' as role from goals
         union all
-        select season, assist1_id, 'A' from silver.plays where event_type = 'goal'
+        select season, assist1_id, 'A' from goals
         union all
-        select season, assist2_id, 'A' from silver.plays where event_type = 'goal'
+        select season, assist2_id, 'A' from goals
     )
     where player_id is not null
     group by all

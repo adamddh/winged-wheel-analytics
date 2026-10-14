@@ -17,7 +17,6 @@ def connect(settings: Settings) -> duckdb.DuckDBPyConnection:
     for schema in ("bronze", "silver", "gold", "meta"):
         con.execute(f"create schema if not exists {schema}")
     con.execute((SQL_DIR / "macros.sql").read_text())
-    con.execute(f"set variable team = '{settings.team}'")
     con.execute(f"set variable current_season = {settings.current_season}")
     con.execute(f"set variable test_season = {settings.test_season}")
     con.execute("create or replace table meta.focus_players (player_id integer, name varchar)")

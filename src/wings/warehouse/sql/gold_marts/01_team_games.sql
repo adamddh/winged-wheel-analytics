@@ -2,11 +2,15 @@
 -- xG and "goals" here are measured on the same shot set: unblocked, non-empty-net,
 -- non-shootout attempts. final_gf / final_ga are the scoreboard.
 create or replace table gold.shots_scored as
-select s.*, x.xg
+select s.*, x.xg, g.game_date, t.abbrev as team, o.abbrev as opponent, p.full_name as shooter
 from gold.shots s
-join gold.shot_xg x using (shot_id);
+join gold.shot_xg x using (shot_id)
+join silver.games g using (game_id)
+join silver.teams t on t.team_id = s.team_id
+join silver.teams o on o.team_id = s.opponent_id
+left join silver.players p on p.player_id = s.shooter_id;
 
-comment on table gold.shots_scored is 'gold.shots joined to model xG (non-empty-net, located shots only).';
+comment on table gold.shots_scored is 'gold.shots joined to model xG (non-empty-net, located shots only) plus team, opponent and shooter names.';
 
 create or replace table gold.team_game_strength as
 with sides as (

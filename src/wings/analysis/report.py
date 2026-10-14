@@ -13,6 +13,7 @@ import pandas as pd
 
 from wings.analysis.style import INK, MUTED, RED, STEEL, draw_half_rink, plt
 from wings.config import Settings
+from wings.markdown import md_table
 
 log = logging.getLogger(__name__)
 
@@ -24,10 +25,9 @@ def season_label(season: int) -> str:
     return f"{season // 10000}-{str(season % 10000)[2:]}"
 
 
-def clock(game_seconds: int) -> str:
-    period = min(int(game_seconds) // 1200 + 1, 4)
-    rem = int(game_seconds) - (period - 1) * 1200
-    return f"{'OT' if period == 4 else f'P{period}'} {rem // 60}:{rem % 60:02d}"
+def clock(period: int, game_seconds: int) -> str:
+    rem = int(game_seconds) - (int(period) - 1) * 1200
+    return f"{'OT' if period > 3 else f'P{period}'} {rem // 60}:{rem % 60:02d}"
 
 
 # --------------------------------------------------------------------------- exports
@@ -43,16 +43,11 @@ def export_tables(con: duckdb.DuckDBPyConnection, settings: Settings, out: Path)
         "team_players": f"select * from gold.player_seasons where team = '{team}' "
         f"and season in ({seasons})",
         "shots": f"""
-            select s.season, s.game_id, g.game_date, s.shot_id, s.period, s.game_seconds,
-                t.abbrev as team, o.abbrev as opponent, p.full_name as shooter, s.event_type,
-                s.is_goal, s.shot_type, s.manpower, s.is_rebound, s.is_rush, s.distance,
-                s.x_norm, s.y_norm, s.xg
-            from gold.shots_scored s
-            join silver.games g using (game_id)
-            join silver.teams t on t.team_id = s.team_id
-            join silver.teams o on o.team_id = s.opponent_id
-            left join silver.players p on p.player_id = s.shooter_id
-            where s.season in ({seasons}) and '{team}' in (g.home_team, g.away_team)
+            select season, game_id, game_date, shot_id, period, game_seconds, team, opponent,
+                shooter, event_type, is_goal, shot_type, manpower, is_rebound, is_rush,
+                distance, x_norm, y_norm, xg
+            from gold.shots_scored
+            where season in ({seasons}) and '{team}' in (team, opponent)
         """,
     }
     out.mkdir(parents=True, exist_ok=True)
@@ -205,18 +200,11 @@ def chart_recap(shots: pd.DataFrame, teams: list[str], path: Path, title: str) -
 # --------------------------------------------------------------------------- markdown
 
 
-def md_table(df: pd.DataFrame) -> str:
-    cols = list(df.columns)
-    rows = ["| " + " | ".join(cols) + " |", "|" + "|".join("---" for _ in cols) + "|"]
-    rows += ["| " + " | ".join(str(v) for v in r) + " |" for r in df.itertuples(index=False)]
-    return "\n".join(rows)
-
-
 def fmt(v, spec: str = ".1f", empty: str = "–") -> str:
     return empty if v is None or pd.isna(v) else format(v, spec)
 
 
-def game_recap(con, settings: Settings, figs: Path, rel: str) -> tuple[str, dict] | None:
+def game_recap(con, settings: Settings, figs: Path, rel: str) -> str:
     team, cur = settings.team, settings.current_season
     game = con.execute(
         "select * from gold.team_games where team = ? and season = ? "
@@ -224,15 +212,9 @@ def game_recap(con, settings: Settings, figs: Path, rel: str) -> tuple[str, dict
         [team, cur],
     ).df()
     if game.empty:
-        return None
+        return ""
     g = game.iloc[0]
-    shots = con.execute(
-        """select s.*, t.abbrev as team, p.full_name as shooter
-           from gold.shots_scored s join silver.teams t using (team_id)
-           left join silver.players p on p.player_id = s.shooter_id
-           where s.game_id = ?""",
-        [int(g.game_id)],
-    ).df()
+    shots = con.execute("select * from gold.shots_scored where game_id = ?", [int(g.game_id)]).df()
     venue = "vs" if g.is_home else "@"
     score = f"{g.result} {g.final_gf}-{g.final_ga}"
     title = f"{team} {venue} {g.opponent}, {g.game_date:%b %d, %Y}: {score}"
@@ -249,7 +231,7 @@ def game_recap(con, settings: Settings, figs: Path, rel: str) -> tuple[str, dict
     top = shots.sort_values("xg", ascending=False).head(5)
     chances = pd.DataFrame(
         {
-            "Time": top.game_seconds.map(clock),
+            "Time": [clock(p, t) for p, t in zip(top.period, top.game_seconds, strict=True)],
             "Team": top.team,
             "Shooter": top.shooter,
             "Type": top.shot_type,
@@ -279,7 +261,7 @@ def game_recap(con, settings: Settings, figs: Path, rel: str) -> tuple[str, dict
 
 {md_table(chances)}
 """
-    return md, {"title": title, "game_id": int(g.game_id)}
+    return md
 
 
 def findings(con, settings: Settings, metrics: dict, figs: Path, rel: str) -> str:
@@ -321,10 +303,7 @@ def findings(con, settings: Settings, metrics: dict, figs: Path, rel: str) -> st
         f"{season_label(test)}: xG share vs goal share, all 32 teams",
     )
     shots = con.execute(
-        """select s.*, t.abbrev as team from gold.shots_scored s
-           join silver.teams t using (team_id) join silver.games g using (game_id)
-           where s.season = ? and ? in (g.home_team, g.away_team)""",
-        [cur, team],
+        "select * from gold.shots_scored where season = ? and ? in (team, opponent)", [cur, team]
     ).df()
     chart_shot_map(
         shots, team, figs / "shot_map.png", f"{team} games, {season_label(cur)} season to date"
@@ -341,7 +320,7 @@ def findings(con, settings: Settings, metrics: dict, figs: Path, rel: str) -> st
             int(r.gf),
             fmt(r.xga),
             int(r.ga),
-            fmt(r.xgf_pct * 100 if r.xgf_pct == r.xgf_pct else None) + "%",
+            fmt(r.xgf_pct * 100) + "%",
         ]
 
     split_table = pd.DataFrame(
@@ -371,7 +350,7 @@ def findings(con, settings: Settings, metrics: dict, figs: Path, rel: str) -> st
                 int(r.shots_on_goal),
                 fmt(r.ixg, ".2f"),
                 fmt(r.goals_above_ixg, "+.2f"),
-                fmt(r.oi_xgf_pct_5v5 * 100 if r.oi_xgf_pct_5v5 == r.oi_xgf_pct_5v5 else None) + "%",
+                fmt(r.oi_xgf_pct_5v5 * 100) + "%",
             ]
         )
     card_table = pd.DataFrame(
@@ -455,7 +434,7 @@ constant-rate baseline, **ROC AUC {test_m["roc_auc"]:.3f}**, and predicts
 
 ![Calibration](models/xg_calibration.png)
 
-{recap[0] if recap else ""}"""
+{recap}"""
 
 
 def update_readme(readme: Path, section: str) -> None:

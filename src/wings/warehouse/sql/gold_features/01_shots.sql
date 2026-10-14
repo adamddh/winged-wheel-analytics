@@ -9,9 +9,8 @@ with ordered as (
         lag(zone_code) over w as prev_zone_code,
         lag(game_seconds) over w as prev_game_seconds,
         lag(period) over w as prev_period,
-        coalesce(sum(case when event_type = 'goal' and is_home then 1 end) over before, 0)
-            as home_goals_before,
-        coalesce(sum(case when event_type = 'goal' and not is_home then 1 end) over before, 0)
+        count(*) filter (where event_type = 'goal' and is_home) over before as home_goals_before,
+        count(*) filter (where event_type = 'goal' and not is_home) over before
             as away_goals_before
     from silver.plays p
     window
@@ -25,6 +24,13 @@ shots as (
         case when attacks_left(is_home, home_defending_side, x) then -x else x end as x_norm,
         case when attacks_left(is_home, home_defending_side, x) then -y else y end as y_norm,
         game_seconds - prev_game_seconds as seconds_since_prev,
+        -- Rebound: the same team's shot on goal or miss within 3s. Blocked shots are excluded
+        -- because they never reach the goalie.
+        case
+            when prev_period = period and game_seconds - prev_game_seconds <= 3
+                and prev_event_type in ('shot-on-goal', 'missed-shot') and prev_team_id = team_id
+            then game_seconds - prev_game_seconds
+        end as rebound_seconds,
         -- zoneCode is recorded from the event owner's perspective, except blocked shots: their
         -- owner is the shooting team but the zone is the blocker's (91% are coded 'D').
         case
@@ -57,18 +63,8 @@ select
     shot_distance(x_norm, y_norm) as distance,
     shot_angle(x_norm, y_norm) as angle,
     shot_type_group(shot_type) as shot_type,
-    -- Rebound: the goalie just faced (or the net just denied) a shot by the same team.
-    -- Blocked shots are excluded: they never reach the goalie.
-    coalesce(
-        prev_period = period and seconds_since_prev <= 3
-        and prev_event_type in ('shot-on-goal', 'missed-shot') and prev_team_id = team_id,
-        false
-    ) as is_rebound,
-    case
-        when prev_period = period and seconds_since_prev <= 3
-            and prev_event_type in ('shot-on-goal', 'missed-shot') and prev_team_id = team_id
-        then seconds_since_prev
-    end as rebound_seconds,
+    rebound_seconds is not null as is_rebound,
+    rebound_seconds,
     -- Rush: the puck was in the shooter's neutral/defensive zone within 4 seconds and the shot
     -- comes from inside the offensive blue line (filters out long dump-ins after faceoffs).
     coalesce(
