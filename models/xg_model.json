@@ -28,37 +28,37 @@
     "rebound": "none"
   },
   "mean": {
-    "distance": 35.81917005054858,
-    "log_distance": 3.380315140307678,
-    "angle": 33.54181540439367
+    "distance": 35.8191700505,
+    "log_distance": 3.3803151403,
+    "angle": 33.5418154044
   },
   "scale": {
-    "distance": 24.63806474336026,
-    "log_distance": 0.712373903903249,
-    "angle": 22.244902217606963
+    "distance": 24.6380647434,
+    "log_distance": 0.7123739039,
+    "angle": 22.2449022176
   },
-  "intercept": -3.140082055033604,
+  "intercept": -3.1400820552,
   "coef": {
-    "distance": -1.2520833141423808,
-    "log_distance": -0.16396920872236986,
-    "angle": -0.3781261686510789,
-    "is_rush": -0.546997789486284,
-    "shot_type=snap": 0.3479536355905047,
-    "shot_type=slap": 0.45724257258229123,
-    "shot_type=backhand": -0.4719039691091498,
-    "shot_type=tip-in": -0.8787594209617513,
-    "shot_type=deflected": -0.6500541787737372,
-    "shot_type=wrap-around": -0.9438964590635732,
-    "shot_type=other": -0.20269501302458218,
-    "manpower=PP": 0.34412178190903736,
-    "manpower=SH": 0.3639721472955661,
-    "manpower=other": 0.2713716072574707,
-    "score_state=-2": -0.10683492404617552,
-    "score_state=-1": -0.053713006550567925,
-    "score_state=1": 0.003436329928773362,
-    "score_state=2": 0.025048503990463013,
-    "rebound=quick": -1.717005064222326,
-    "rebound=delayed": 0.5854308178467066
+    "distance": -1.2520833142,
+    "log_distance": -0.1639692088,
+    "angle": -0.3781261689,
+    "is_rush": -0.5469977893,
+    "shot_type=snap": 0.3479536354,
+    "shot_type=slap": 0.457242573,
+    "shot_type=backhand": -0.4719039703,
+    "shot_type=tip-in": -0.8787594211,
+    "shot_type=deflected": -0.6500541787,
+    "shot_type=wrap-around": -0.9438964567,
+    "shot_type=other": -0.2026950126,
+    "manpower=PP": 0.3441217828,
+    "manpower=SH": 0.3639721475,
+    "manpower=other": 0.2713716071,
+    "score_state=-2": -0.1068349248,
+    "score_state=-1": -0.0537130067,
+    "score_state=1": 0.0034363297,
+    "score_state=2": 0.0250485038,
+    "rebound=quick": -1.7170050644,
+    "rebound=delayed": 0.5854308192
   },
   "train_seasons": [
     20242025

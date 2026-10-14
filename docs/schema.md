@@ -209,8 +209,9 @@ Player-card rows for the configured focus players, held-out and current season (
 | `card_name` | VARCHAR |  |
 | `player_id` | INTEGER |  |
 | `season` | INTEGER |  |
-| `full_name` | VARCHAR |  |
+| `sweater_number` | INTEGER |  |
 | `position` | VARCHAR |  |
+| `full_name` | VARCHAR |  |
 | `team` | VARCHAR |  |
 | `games_played` | BIGINT |  |
 | `goals` | BIGINT |  |
@@ -218,21 +219,21 @@ Player-card rows for the configured focus players, held-out and current season (
 | `points` | BIGINT |  |
 | `shots_on_goal` | BIGINT |  |
 | `unblocked_attempts` | BIGINT |  |
-| `ixg` | DOUBLE |  |
-| `ixg_5v5` | DOUBLE |  |
-| `ixg_pp` | DOUBLE |  |
-| `goals_above_ixg` | DOUBLE |  |
+| `ixg` | DECIMAL(38,8) |  |
+| `ixg_5v5` | DECIMAL(38,8) |  |
+| `ixg_pp` | DECIMAL(38,8) |  |
+| `goals_above_ixg` | DECIMAL(38,8) |  |
 | `games_with_shifts` | BIGINT |  |
 | `toi_seconds` | HUGEINT |  |
 | `toi_per_game_min` | DOUBLE |  |
 | `ixg_per_60` | DOUBLE |  |
-| `oi_xgf_5v5` | DOUBLE |  |
-| `oi_xga_5v5` | DOUBLE |  |
+| `oi_xgf_5v5` | DECIMAL(38,8) |  |
+| `oi_xga_5v5` | DECIMAL(38,8) |  |
 | `oi_gf_5v5` | BIGINT |  |
 | `oi_ga_5v5` | BIGINT |  |
 | `oi_xgf_pct_5v5` | DOUBLE |  |
-| `oi_xgf_all` | DOUBLE |  |
-| `oi_xga_all` | DOUBLE |  |
+| `oi_xgf_all` | DECIMAL(38,8) |  |
+| `oi_xga_all` | DECIMAL(38,8) |  |
 
 ### `gold.player_seasons`
 
@@ -246,6 +247,7 @@ Skater season stats: scoring, individual xG (ixg), and where shift data exists, 
 | `player_id` | INTEGER |  |
 | `full_name` | VARCHAR |  |
 | `position` | VARCHAR |  |
+| `sweater_number` | INTEGER |  |
 | `team` | VARCHAR |  |
 | `games_played` | BIGINT |  |
 | `goals` | BIGINT |  |
@@ -253,21 +255,21 @@ Skater season stats: scoring, individual xG (ixg), and where shift data exists, 
 | `points` | BIGINT |  |
 | `shots_on_goal` | BIGINT |  |
 | `unblocked_attempts` | BIGINT |  |
-| `ixg` | DOUBLE |  |
-| `ixg_5v5` | DOUBLE |  |
-| `ixg_pp` | DOUBLE |  |
-| `goals_above_ixg` | DOUBLE |  |
+| `ixg` | DECIMAL(38,8) |  |
+| `ixg_5v5` | DECIMAL(38,8) |  |
+| `ixg_pp` | DECIMAL(38,8) |  |
+| `goals_above_ixg` | DECIMAL(38,8) |  |
 | `games_with_shifts` | BIGINT | Games with published NHL shift charts; denominator for TOI and on-ice stats. |
 | `toi_seconds` | HUGEINT |  |
 | `toi_per_game_min` | DOUBLE |  |
 | `ixg_per_60` | DOUBLE |  |
-| `oi_xgf_5v5` | DOUBLE |  |
-| `oi_xga_5v5` | DOUBLE |  |
+| `oi_xgf_5v5` | DECIMAL(38,8) |  |
+| `oi_xga_5v5` | DECIMAL(38,8) |  |
 | `oi_gf_5v5` | BIGINT |  |
 | `oi_ga_5v5` | BIGINT |  |
 | `oi_xgf_pct_5v5` | DOUBLE | Share of 5v5 xG that was for the player's team while he was on the ice. |
-| `oi_xgf_all` | DOUBLE |  |
-| `oi_xga_all` | DOUBLE |  |
+| `oi_xgf_all` | DECIMAL(38,8) |  |
+| `oi_xga_all` | DECIMAL(38,8) |  |
 
 ### `gold.shot_xg`
 
@@ -349,7 +351,7 @@ gold.shots joined to model xG (non-empty-net, located shots only) plus team, opp
 | `score_diff` | BIGINT |  |
 | `score_state` | BIGINT |  |
 | `is_empty_net` | BOOLEAN |  |
-| `xg` | DOUBLE |  |
+| `xg` | DECIMAL(10,8) |  |
 | `game_date` | DATE |  |
 | `team` | VARCHAR |  |
 | `opponent` | VARCHAR |  |
@@ -372,8 +374,8 @@ Per team, game and strength (5v5/PP/SH/other from that team's bench): unblocked 
 | `strength` | VARCHAR |  |
 | `shots_for` | BIGINT |  |
 | `shots_against` | BIGINT |  |
-| `xgf` | DOUBLE |  |
-| `xga` | DOUBLE |  |
+| `xgf` | DECIMAL(38,8) |  |
+| `xga` | DECIMAL(38,8) |  |
 | `gf` | BIGINT |  |
 | `ga` | BIGINT |  |
 
@@ -399,12 +401,12 @@ One row per team per completed game: result, scoreboard, and xG/goals for and ag
 | `decided_in` | VARCHAR |  |
 | `shots_for` | HUGEINT |  |
 | `shots_against` | HUGEINT |  |
-| `xgf` | DOUBLE |  |
-| `xga` | DOUBLE |  |
+| `xgf` | DECIMAL(38,8) |  |
+| `xga` | DECIMAL(38,8) |  |
 | `gf` | HUGEINT | Goals on the xG shot set (excludes empty-net and shootout goals). |
 | `ga` | HUGEINT |  |
-| `xgf_5v5` | DOUBLE |  |
-| `xga_5v5` | DOUBLE |  |
+| `xgf_5v5` | DECIMAL(38,8) |  |
+| `xga_5v5` | DECIMAL(38,8) |  |
 | `gf_5v5` | HUGEINT |  |
 | `ga_5v5` | HUGEINT |  |
 | `team_game_number` | BIGINT |  |
@@ -423,14 +425,14 @@ Team season totals by strength (5v5, PP, SH, other, all). finishing_above_xg = G
 | `games` | BIGINT |  |
 | `shots_for` | HUGEINT |  |
 | `shots_against` | HUGEINT |  |
-| `xgf` | DOUBLE |  |
-| `xga` | DOUBLE |  |
+| `xgf` | DECIMAL(38,8) |  |
+| `xga` | DECIMAL(38,8) |  |
 | `gf` | HUGEINT |  |
 | `ga` | HUGEINT |  |
 | `team` | VARCHAR |  |
 | `xgf_pct` | DOUBLE |  |
-| `finishing_above_xg` | DOUBLE |  |
-| `goaltending_above_xg` | DOUBLE |  |
+| `finishing_above_xg` | DECIMAL(38,8) |  |
+| `goaltending_above_xg` | DECIMAL(38,8) |  |
 | `xgf_pct_rank` | BIGINT |  |
 
 ### `gold.xg_validation_team_games`
@@ -444,6 +446,6 @@ Team-game xGF from our model next to MoneyPuck's xGF for the same games.
 | `season` | INTEGER |  |
 | `game_id` | BIGINT |  |
 | `team` | VARCHAR |  |
-| `xgf` | DOUBLE |  |
+| `xgf` | DECIMAL(38,8) |  |
 | `mp_xgf` | DOUBLE |  |
 | `gf` | HUGEINT |  |
