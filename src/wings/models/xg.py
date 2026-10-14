@@ -48,6 +48,7 @@ SHOTS_SQL = """
             when rebound_seconds <= 1 then 'quick' else 'delayed' end as rebound
     from gold.shots
     where not is_empty_net and distance is not null and angle is not null
+    order by shot_id  -- fixed row order: identical data gives byte-identical artifacts
 """
 
 
@@ -80,13 +81,15 @@ def fit(train: pd.DataFrame) -> dict:
     spec = {
         "features": feature_names(),
         "reference": {c: levels[0] for c, levels in CATEGORICAL.items()},
-        "mean": {c: float(raw[c].mean()) for c in NUMERIC},
-        "scale": {c: float(raw[c].std()) for c in NUMERIC},
+        "mean": {c: round(float(raw[c].mean()), 10) for c in NUMERIC},
+        "scale": {c: round(float(raw[c].std()), 10) for c in NUMERIC},
     }
     model = LogisticRegression(C=1.0, max_iter=5000)
     model.fit(design_matrix(train, spec), train.is_goal)
-    spec["intercept"] = float(model.intercept_[0])
-    spec["coef"] = dict(zip(spec["features"], map(float, model.coef_[0]), strict=True))
+    spec["intercept"] = round(float(model.intercept_[0]), 10)
+    spec["coef"] = {
+        f: round(float(c), 10) for f, c in zip(spec["features"], model.coef_[0], strict=True)
+    }
     return spec
 
 
