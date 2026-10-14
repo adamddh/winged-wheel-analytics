@@ -71,7 +71,8 @@ on_ice as (
     group by all
 )
 select
-    gp.season, gp.player_id, p.full_name, p.position, t.abbrev as team, gp.games_played,
+    gp.season, gp.player_id, p.full_name, p.position, p.sweater_number, t.abbrev as team,
+    gp.games_played,
     coalesce(pt.goals, 0) as goals, coalesce(pt.assists, 0) as assists,
     coalesce(pt.goals, 0) + coalesce(pt.assists, 0) as points,
     coalesce(i.shots_on_goal, 0) as shots_on_goal,
@@ -101,8 +102,13 @@ comment on column gold.player_seasons.oi_xgf_pct_5v5 is 'Share of 5v5 xG that wa
 
 -- Focus players always get a card for both analysis seasons, even with zero games played.
 create or replace table gold.player_cards as
-select f.name as card_name, f.player_id, s.season, ps.* exclude (player_id, season)
+select
+    f.name as card_name, f.player_id, s.season,
+    coalesce(ps.sweater_number, p.sweater_number) as sweater_number,
+    coalesce(ps.position, p.position) as position,
+    ps.* exclude (player_id, season, sweater_number, position)
 from meta.focus_players f
+join silver.players p using (player_id)
 cross join (select unnest([getvariable('test_season'), getvariable('current_season')]) as season) s
 left join gold.player_seasons ps on ps.player_id = f.player_id and ps.season = s.season;
 
