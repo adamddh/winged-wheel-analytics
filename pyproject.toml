@@ -21,7 +21,8 @@ dependencies = [
 wings = "wings.cli:main"
 
 [dependency-groups]
-dev = ["pytest>=8", "ruff>=0.6"]
+# streamlit is pinned to match app/requirements.txt (the Community Cloud runtime)
+dev = ["pytest>=8", "ruff>=0.6", "streamlit==1.66.0"]
 
 [build-system]
 requires = ["hatchling"]

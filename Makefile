@@ -18,7 +18,7 @@ fmt:
 	uv run ruff format .
 
 app:
-	uv run --with streamlit streamlit run app/streamlit_app.py
+	uv run streamlit run app/streamlit_app.py
 
 clean:
 	rm -rf data/warehouse.duckdb
