@@ -1,0 +1,48 @@
+name: Data refresh
+
+# Rebuild the warehouse every morning after the night's games are official, then publish
+# the regenerated exports/reports. Streamlit Community Cloud redeploys on the push.
+on:
+  schedule:
+    - cron: "0 12 * * *" # 12:00 UTC = 7 a.m. EST / 8 a.m. EDT
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: data-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      # data/raw is the incremental cache: immutable games are fetched once, ever.
+      - name: Restore raw data cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/raw
+          key: raw-${{ github.run_id }}
+          restore-keys: raw-
+      - name: Run pipeline (fails, and publishes nothing, if a quality gate fails)
+        run: make pipeline
+      - name: Save raw data cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data/raw
+          key: raw-${{ github.run_id }}
+      - name: Publish refreshed outputs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md exports models reports docs
+          if git diff --cached --quiet; then echo "nothing changed"; exit 0; fi
+          git commit -m "chore(data): daily refresh $(date -u +%Y-%m-%d)"
+          git push
