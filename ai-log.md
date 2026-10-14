@@ -160,6 +160,19 @@ below says what the check was.
 - **Guard in CI:** `tests/test_app.py` renders the app headlessly against the committed exports,
   so a broken dashboard fails the PR.
 
+## End-to-end check of the refresh loop
+
+- **Test:** the refresh workflow was triggered by hand once. It ran a cold backfill on GitHub's
+  runners, passed the quality gates, and the bot committed regenerated outputs to `main`.
+- **Bug found:** the live dashboard kept showing the previous refresh time. The AI's own
+  `st.cache_data(ttl=3600)` was serving cached tables across Streamlit Cloud's pull of the new
+  commit.
+- **Fix:** tables are cached per `refreshed_at`. Verified by polling the live site with
+  Playwright until the bot's timestamp appeared.
+- **Final acceptance:** a fresh clone of `main` ran `make pipeline` end to end (full network
+  backfill, about 10 minutes), then `pytest` passed. Every model artifact, export and figure was
+  byte-identical to the committed ones; only timestamps differed.
+
 ## Mistakes the AI made, and how they were caught
 
 | Mistake | Caught by |
@@ -169,6 +182,7 @@ below says what the check was.
 | `git stash -u` silently dropped a new, still-empty `gold_marts/` directory | file writes failed; directory recreated |
 | Merged a PR whose new commit hadn't registered CI yet (`gh pr checks --watch` exited on "no checks reported") | noticed in the output; confirmed CI passed on `main` afterwards; the merge procedure now polls until every check reports SUCCESS |
 | Plotted faceoff dots in team red, which read as Detroit shots on the opponent panel | visual review of the rendered PNG |
+| Cached dashboard data with a 1-hour TTL, so a new refresh stayed invisible for up to an hour | end-to-end check of the live site after a real refresh |
 
 ## Guardrails
 
