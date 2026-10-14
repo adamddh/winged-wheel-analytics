@@ -140,3 +140,33 @@ def test_empty_net_and_shootout(con):
     )
     assert list(shots.index) == [1]
     assert shots.loc[1, "is_empty_net"]
+
+
+def test_duplicate_and_nested_shifts_are_merged(con):
+    def shift(sid, pid, start, end):
+        return {
+            "id": sid,
+            "gameId": 1,
+            "playerId": pid,
+            "teamId": 17,
+            "period": 1,
+            "startTime": start,
+            "endTime": end,
+            "typeCode": 517,
+        }
+
+    data = [
+        shift(1, 7, "00:00", "00:45"),
+        shift(2, 7, "00:00", "00:45"),  # exact duplicate under a new id
+        shift(3, 7, "00:10", "00:30"),  # nested fragment
+        shift(4, 7, "00:45", "01:30"),  # touches the previous shift: a separate shift
+        shift(5, 8, "00:00", "00:40"),
+        {**shift(6, 8, "00:40", "00:40"), "typeCode": 505},  # goal marker, not a shift
+    ]
+    con.execute("create table bronze.nhl_shifts as select ?::json as payload", [{"data": data}])
+    con.execute((SQL_DIR / "silver" / "04_shifts.sql").read_text())
+    rows = con.execute(
+        "select player_id, start_seconds, end_seconds, source_records from silver.shifts "
+        "order by player_id, start_seconds"
+    ).fetchall()
+    assert rows == [(7, 0, 45, 3), (7, 45, 90, 1), (8, 0, 40, 1)]

@@ -58,12 +58,14 @@ select player_id, first_name, last_name, first_name || ' ' || last_name as full_
     sweater_number, headshot_url
 from (
     select player_id, first_name, last_name, position, sweater_number, headshot_url,
-        game_date::timestamptz as as_of
+        game_id // 1000000 as season_start, game_date::timestamptz as as_of
     from silver.game_rosters
     union all
-    select player_id, first_name, last_name, position, sweater_number, headshot_url, ingested_at
+    select player_id, first_name, last_name, position, sweater_number, headshot_url,
+        season // 10000, ingested_at
     from silver.roster_players
 )
-qualify row_number() over (partition by player_id order by as_of desc) = 1;
+-- latest season first, so a re-fetched old roster can never override newer game data
+qualify row_number() over (partition by player_id order by season_start desc, as_of desc) = 1;
 
 comment on table silver.players is 'Player dimension: latest known name, position and number per player_id.';
