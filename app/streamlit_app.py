@@ -124,11 +124,17 @@ header[data-testid="stHeader"] { background: transparent; }
 # --------------------------------------------------------------------------- data
 
 
-@st.cache_data(ttl=3600)
-def load() -> tuple[dict[str, pd.DataFrame], dict]:
+@st.cache_data
+def load_tables(refreshed_at: str) -> dict[str, pd.DataFrame]:
+    """Cached per data refresh: a new refresh_at (daily commit) is a new cache key, so the
+    app never serves yesterday's tables after Streamlit Cloud pulls the refresh commit."""
     names = ["team_games", "team_season_splits", "player_cards", "shots"]
-    tables = {n: pd.read_parquet(EXPORTS / f"{n}.parquet") for n in names}
-    return tables, json.loads((EXPORTS / "meta.json").read_text())
+    return {n: pd.read_parquet(EXPORTS / f"{n}.parquet") for n in names}
+
+
+def load() -> tuple[dict[str, pd.DataFrame], dict]:
+    meta = json.loads((EXPORTS / "meta.json").read_text())
+    return load_tables(meta["refreshed_at"]), meta
 
 
 def season_label(season: int) -> str:
