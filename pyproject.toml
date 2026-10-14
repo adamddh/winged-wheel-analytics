@@ -13,6 +13,7 @@ dependencies = [
     "pandas>=2.2",
     "pyarrow>=17",
     "pydantic>=2.7",
+    "pytz>=2026.5",
     "scikit-learn>=1.5",
 ]
 
