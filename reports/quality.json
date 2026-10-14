@@ -1,0 +1,268 @@
+{
+  "base": {
+    "checked_at": "2026-10-14T21:24:00+00:00",
+    "results": [
+      {
+        "name": "20242025: >= 1300 completed games",
+        "category": "row_count",
+        "sql": "select greatest(0, 1300 - count(*)) from silver.games where season = 20242025 and game_state = 'OFF'",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "20252026: >= 1300 completed games",
+        "category": "row_count",
+        "sql": "select greatest(0, 1300 - count(*)) from silver.games where season = 20252026 and game_state = 'OFF'",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "20262027: >= 1 completed games",
+        "category": "row_count",
+        "sql": "select greatest(0, 1 - count(*)) from silver.games where season = 20262027 and game_state = 'OFF'",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "every completed game has play-by-play",
+        "category": "completeness",
+        "sql": "select count(*) from silver.games g where g.game_state = 'OFF' and g.season in (20242025, 20252026, 20262027) and not exists (select 1 from silver.plays p where p.game_id = g.game_id)",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "every completed DET game has shift charts",
+        "category": "completeness",
+        "sql": "select count(*) from silver.games g where g.game_state = 'OFF' and g.season in (20252026, 20262027) and 'DET' in (g.home_team, g.away_team) and not exists (select 1 from silver.shifts s where s.game_id = g.game_id)",
+        "severity": "warn",
+        "violations": 3,
+        "passed": false
+      },
+      {
+        "name": "current-season schedule refreshed within 36h",
+        "category": "freshness",
+        "sql": "select coalesce(max(ingested_at) < now() - interval 36 hour, true)::int from bronze.nhl_schedule where source_file like '%/20262027/%'",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "silver.plays.event_type null rate <= 0.0%",
+        "category": "null_rate",
+        "sql": "select (avg((event_type is null)::int) > 0.0)::int from silver.plays",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "silver.plays.game_seconds null rate <= 0.0%",
+        "category": "null_rate",
+        "sql": "select (avg((game_seconds is null)::int) > 0.0)::int from silver.plays",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "gold.shots.situation_code null rate <= 0.5%",
+        "category": "null_rate",
+        "sql": "select (avg((situation_code is null)::int) > 0.005)::int from gold.shots",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "gold.shots.shooter_id null rate <= 0.5%",
+        "category": "null_rate",
+        "sql": "select (avg((shooter_id is null)::int) > 0.005)::int from gold.shots",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "gold.shots.distance null rate <= 1.0%",
+        "category": "null_rate",
+        "sql": "select (avg((distance is null)::int) > 0.01)::int from gold.shots",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "silver.games unique on (game_id)",
+        "category": "duplicate_keys",
+        "sql": "select count(*) from (select game_id from silver.games group by all having count(*) > 1)",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "silver.plays unique on (game_id, event_id)",
+        "category": "duplicate_keys",
+        "sql": "select count(*) from (select game_id, event_id from silver.plays group by all having count(*) > 1)",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "silver.players unique on (player_id)",
+        "category": "duplicate_keys",
+        "sql": "select count(*) from (select player_id from silver.players group by all having count(*) > 1)",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "silver.shifts unique on (shift_id)",
+        "category": "duplicate_keys",
+        "sql": "select count(*) from (select shift_id from silver.shifts group by all having count(*) > 1)",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "silver.moneypuck_shots unique on (season, mp_shot_id)",
+        "category": "duplicate_keys",
+        "sql": "select count(*) from (select season, mp_shot_id from silver.moneypuck_shots group by all having count(*) > 1)",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "gold.shots unique on (shot_id)",
+        "category": "duplicate_keys",
+        "sql": "select count(*) from (select shot_id from gold.shots group by all having count(*) > 1)",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "no overlapping shifts for the same player",
+        "category": "duplicate_keys",
+        "sql": "select count(*) from silver.shifts a join silver.shifts b on a.game_id = b.game_id and a.player_id = b.player_id and a.shift_id < b.shift_id and a.start_seconds < b.end_seconds and b.start_seconds < a.end_seconds",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "silver.plays.game_id -> silver.games.game_id",
+        "category": "referential_integrity",
+        "sql": "select count(*) from silver.plays c where c.game_id is not null and not exists (select 1 from silver.games p where p.game_id = c.game_id)",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "silver.shifts.game_id -> silver.games.game_id",
+        "category": "referential_integrity",
+        "sql": "select count(*) from silver.shifts c where c.game_id is not null and not exists (select 1 from silver.games p where p.game_id = c.game_id)",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "silver.shifts.player_id -> silver.players.player_id",
+        "category": "referential_integrity",
+        "sql": "select count(*) from silver.shifts c where c.player_id is not null and not exists (select 1 from silver.players p where p.player_id = c.player_id)",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "gold.shots.shooter_id -> silver.players.player_id",
+        "category": "referential_integrity",
+        "sql": "select count(*) from gold.shots c where c.shooter_id is not null and not exists (select 1 from silver.players p where p.player_id = c.shooter_id)",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "silver.moneypuck_shots.game_id -> silver.games.game_id",
+        "category": "referential_integrity",
+        "sql": "select count(*) from silver.moneypuck_shots c where c.game_id is not null and not exists (select 1 from silver.games p where p.game_id = c.game_id)",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "shot distance within rink bounds",
+        "category": "range",
+        "sql": "select count(*) from gold.shots where distance not between 0 and 200",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      }
+    ]
+  },
+  "marts": {
+    "checked_at": "2026-10-14T21:24:01+00:00",
+    "results": [
+      {
+        "name": "xG within [0, 1]",
+        "category": "range",
+        "sql": "select count(*) from gold.shot_xg where xg is null or xg not between 0 and 1",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "each completed game has exactly two team rows",
+        "category": "row_count",
+        "sql": "select count(*) from silver.games g where game_state = 'OFF' and (select count(*) from gold.team_games t where t.game_id = g.game_id) <> 2",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "xG-set goals never exceed scoreboard goals",
+        "category": "consistency",
+        "sql": "select count(*) from gold.team_games where gf > final_gf",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "gold.team_games unique on (game_id, team_id)",
+        "category": "duplicate_keys",
+        "sql": "select count(*) from (select game_id, team_id from gold.team_games group by all having count(*) > 1)",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "gold.player_seasons unique on (season, player_id)",
+        "category": "duplicate_keys",
+        "sql": "select count(*) from (select season, player_id from gold.player_seasons group by all having count(*) > 1)",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "gold.player_cards unique on (season, player_id)",
+        "category": "duplicate_keys",
+        "sql": "select count(*) from (select season, player_id from gold.player_cards group by all having count(*) > 1)",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "gold.team_games.team_id -> silver.teams.team_id",
+        "category": "referential_integrity",
+        "sql": "select count(*) from gold.team_games c where c.team_id is not null and not exists (select 1 from silver.teams p where p.team_id = c.team_id)",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      },
+      {
+        "name": "4 focus players x 2 seasons in player_cards",
+        "category": "row_count",
+        "sql": "select abs(count(*) - 8) from gold.player_cards",
+        "severity": "error",
+        "violations": 0,
+        "passed": true
+      }
+    ]
+  }
+}

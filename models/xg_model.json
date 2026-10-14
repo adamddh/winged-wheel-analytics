@@ -1,0 +1,67 @@
+{
+  "features": [
+    "distance",
+    "log_distance",
+    "angle",
+    "is_rush",
+    "shot_type=snap",
+    "shot_type=slap",
+    "shot_type=backhand",
+    "shot_type=tip-in",
+    "shot_type=deflected",
+    "shot_type=wrap-around",
+    "shot_type=other",
+    "manpower=PP",
+    "manpower=SH",
+    "manpower=other",
+    "score_state=-2",
+    "score_state=-1",
+    "score_state=1",
+    "score_state=2",
+    "rebound=quick",
+    "rebound=delayed"
+  ],
+  "reference": {
+    "shot_type": "wrist",
+    "manpower": "5v5",
+    "score_state": 0,
+    "rebound": "none"
+  },
+  "mean": {
+    "distance": 35.81917005054858,
+    "log_distance": 3.380315140307678,
+    "angle": 33.54181540439367
+  },
+  "scale": {
+    "distance": 24.63806474336026,
+    "log_distance": 0.712373903903249,
+    "angle": 22.244902217606963
+  },
+  "intercept": -3.140082055033604,
+  "coef": {
+    "distance": -1.2520833141423808,
+    "log_distance": -0.16396920872236986,
+    "angle": -0.3781261686510789,
+    "is_rush": -0.546997789486284,
+    "shot_type=snap": 0.3479536355905047,
+    "shot_type=slap": 0.45724257258229123,
+    "shot_type=backhand": -0.4719039691091498,
+    "shot_type=tip-in": -0.8787594209617513,
+    "shot_type=deflected": -0.6500541787737372,
+    "shot_type=wrap-around": -0.9438964590635732,
+    "shot_type=other": -0.20269501302458218,
+    "manpower=PP": 0.34412178190903736,
+    "manpower=SH": 0.3639721472955661,
+    "manpower=other": 0.2713716072574707,
+    "score_state=-2": -0.10683492404617552,
+    "score_state=-1": -0.053713006550567925,
+    "score_state=1": 0.003436329928773362,
+    "score_state=2": 0.025048503990463013,
+    "rebound=quick": -1.717005064222326,
+    "rebound=delayed": 0.5854308178467066
+  },
+  "train_seasons": [
+    20242025
+  ],
+  "test_season": 20252026
+}

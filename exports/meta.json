@@ -1,0 +1,23 @@
+{
+  "refreshed_at": "2026-10-14T21:24:01+00:00",
+  "data_through": "2026-10-13",
+  "team": "DET",
+  "current_season": 20262027,
+  "test_season": 20252026,
+  "model_test_metrics": {
+    "shots": 111099,
+    "goals": 7578,
+    "expected_goals": 7927.8,
+    "log_loss": 0.22265,
+    "baseline_log_loss": 0.24901,
+    "brier": 0.06013,
+    "roc_auc": 0.754
+  },
+  "moneypuck_benchmark": {
+    "matched_shots": 110269,
+    "match_rate": 0.9925,
+    "shot_level_correlation": 0.595,
+    "ours_log_loss": 0.22299,
+    "moneypuck_log_loss": 0.21778
+  }
+}
