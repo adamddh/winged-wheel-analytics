@@ -14,6 +14,9 @@ class Settings(BaseModel):
     request_interval_s: float = 0.1
     focus_players: dict[str, int]
     min_games: dict[int, int]
+    freshness_hours: int = 36
+    output_dir: Path = Path(".")
+    export_uri: str | None = None  # e.g. s3://bucket/wings to mirror gold exports
     offline: bool = False
 
     @property
