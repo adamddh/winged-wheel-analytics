@@ -127,6 +127,39 @@ below says what the check was.
 - **Lesson:** the review found the bug through a *physical* invariant (a team can't have more than 6
   skaters on the ice). Invariants like that are now quality checks instead of one-off queries.
 
+## Reproducibility: byte-identical reruns
+
+- **Symptom:** the fresh-clone acceptance run produced a different `models/xg_model.json` than the
+  committed one, on identical data. The differences were in the 15th significant digit.
+- **Root cause:** parallel scans and hash aggregation add floating-point numbers in a different
+  order each run. That's harmless numerically, but every daily refresh would have committed noise.
+- **What didn't work:** single-threading the marts, then ordering the materialized table. Both
+  were tested, and checksums still differed across runs.
+- **Fix:** model input rows are ordered by `shot_id` and coefficients are rounded to 10 places.
+  xG is carried through the marts as `DECIMAL(10,8)`, so every sum is exact and
+  order-independent. Exports are sorted.
+- **Verified:** three consecutive runs give identical MD5s for every model artifact, export and
+  figure.
+
+## Dashboard: design and visual QA loop
+
+- **Design:** the AI drafted a design plan, checked it against generic "AI dashboard" defaults
+  (cream backgrounds, card grids, all-caps eyebrow labels), then built around the subject itself:
+  - a to-scale NHL rink in SVG as the hero
+  - rink red for Detroit and blue-line blue for opponents, the same two colors already
+    validated for color-vision deficiency in the README charts
+  - one variable typeface (Archivo) with condensed widths for jersey numerals
+- **Visual QA:** every iteration was screenshotted headlessly with Playwright, driving the
+  installed Chrome, at desktop and phone widths, and reviewed as images. That loop caught:
+  - `st.html` silently sanitizing inline SVG away (the hero rendered as nothing); the rink now
+    renders through markdown, which keeps the hover titles
+  - a missing chart legend
+  - Edvinsson's card losing his jersey number because he has no stats row yet
+  - oversized half-rinks
+  - player cards stacking out of order on phones
+- **Guard in CI:** `tests/test_app.py` renders the app headlessly against the committed exports,
+  so a broken dashboard fails the PR.
+
 ## Mistakes the AI made, and how they were caught
 
 | Mistake | Caught by |
