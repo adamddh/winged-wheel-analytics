@@ -1,0 +1,24 @@
+# Pipeline configuration. Override the path with WINGS_CONFIG=path/to/file.toml.
+data_dir = "data"
+team = "DET"
+
+# xG model: fit on train_seasons, evaluate on the held-out test_season.
+train_seasons = [20242025]
+test_season = 20252026
+# Season-to-date analysis target.
+current_season = 20262027
+
+# Polite NHL API pacing: minimum seconds between requests.
+request_interval_s = 0.1
+
+[focus_players]
+"Dylan Larkin" = 8477946
+"Lucas Raymond" = 8482078
+"Moritz Seider" = 8481542
+"Simon Edvinsson" = 8482762
+
+# Data-quality floors: minimum completed regular-season games per season.
+[min_games]
+20242025 = 1300
+20252026 = 1300
+20262027 = 1
