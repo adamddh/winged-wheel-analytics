@@ -2,7 +2,11 @@
 -- xG and "goals" here are measured on the same shot set: unblocked, non-empty-net,
 -- non-shootout attempts. final_gf / final_ga are the scoreboard.
 create or replace table gold.shots_scored as
-select s.*, x.xg, g.game_date, t.abbrev as team, o.abbrev as opponent, p.full_name as shooter
+-- xG as DECIMAL: sums are exact, so every mart is identical run to run regardless of the
+-- order parallel aggregation adds rows in (floats drifted in the 15th digit).
+select
+    s.*, round(x.xg, 8)::decimal(10, 8) as xg, g.game_date,
+    t.abbrev as team, o.abbrev as opponent, p.full_name as shooter
 from gold.shots s
 join gold.shot_xg x using (shot_id)
 join silver.games g using (game_id)
