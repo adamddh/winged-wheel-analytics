@@ -93,6 +93,7 @@ header[data-testid="stHeader"] { background: transparent; }
   border-bottom: 2px solid var(--ink); }
 .ww-table td { text-align: right; padding: .4rem .6rem; border-bottom: 1px solid var(--line); }
 .ww-table .t { text-align: left; }
+.ww-table td.t:first-child { white-space: nowrap; }
 .ww-half svg { max-width: 340px; }
 .ww-map svg { max-width: 640px; }
 .ww-card { display: grid; grid-template-columns: auto 1fr; gap: 0 1.1rem; align-items: start;
@@ -261,18 +262,22 @@ def xg_by_game_chart(games: pd.DataFrame) -> alt.Chart:
         ]
     )
     long["value"] = long.value.round(2)
+    series = [
+        "Detroit expected goals",
+        "Opponent expected goals",
+        "Detroit goals",
+        "Opponent goals",
+    ]
     color = alt.Color(
         "series:N",
         legend=alt.Legend(title=None),
-        scale=alt.Scale(
-            domain=[
-                "Detroit expected goals",
-                "Opponent expected goals",
-                "Detroit goals",
-                "Opponent goals",
-            ],
-            range=[RED, BLUE, RED, BLUE],
-        ),
+        scale=alt.Scale(domain=series, range=[RED, BLUE, RED, BLUE]),
+    )
+    # one shared shape scale so color + shape merge into a single four-entry legend
+    shape = alt.Shape(
+        "series:N",
+        legend=alt.Legend(title=None),
+        scale=alt.Scale(domain=series, range=["circle", "circle", "circle", "square"]),
     )
     x = alt.X("label:N", sort=list(games.label), title=None, axis=alt.Axis(labelAngle=0))
     tooltip = [
@@ -284,7 +289,11 @@ def xg_by_game_chart(games: pd.DataFrame) -> alt.Chart:
         alt.Chart(long[long.kind == "xG"])
         .mark_line(strokeWidth=2.5, point=alt.OverlayMarkDef(size=70, filled=True))
         .encode(
-            x=x, y=alt.Y("value:Q", title="Goals and expected goals"), color=color, tooltip=tooltip
+            x=x,
+            y=alt.Y("value:Q", title="Goals and expected goals"),
+            color=color,
+            shape=shape,
+            tooltip=tooltip,
         )
     )
     goals = (
@@ -294,7 +303,7 @@ def xg_by_game_chart(games: pd.DataFrame) -> alt.Chart:
             x=x,
             y="value:Q",
             color=color,
-            shape=alt.Shape("series:N", legend=None, scale=alt.Scale(range=["circle", "square"])),
+            shape=shape,
             tooltip=tooltip,
         )
     )
@@ -474,6 +483,10 @@ with tab_season:
     ]
     st.html('<h2 class="ww-h2">Expected and actual goals, game by game</h2>')
     st.altair_chart(xg_by_game_chart(sg), use_container_width=True, theme=None)
+    st.html(
+        '<p class="ww-caption">Lines are expected goals; open circles and squares are the '
+        "goals actually scored. Hover any point for the game.</p>"
+    )
 
     left, right = st.columns([1, 1], gap="large")
     with left:
@@ -503,14 +516,14 @@ with tab_season:
             "meaningful at 5 on 5.</p>"
         )
     with right:
+        st.html('<h2 class="ww-h2">Where Detroit sits in the league</h2>')
         which = st.segmented_control(
-            "League view",
+            "Season",
             [season_label(cur), season_label(test)],
             default=season_label(cur),
             key="league_season",
         )
         season_pick = cur if which != season_label(test) else test
-        st.html(f'<h2 class="ww-h2">Where Detroit sits, {season_label(season_pick)}</h2>')
         st.altair_chart(
             league_chart(splits_all[splits_all.season == season_pick]),
             use_container_width=True,
