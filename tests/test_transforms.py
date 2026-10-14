@@ -123,6 +123,7 @@ def test_shot_features(con):
     assert list(shots.index) == [1, 2, 4, 5]
     assert shots.loc[1, "x_norm"] == 60 and shots.loc[1, "distance"] == 29
     assert not shots.loc[1, "is_rebound"] and shots.loc[2, "is_rebound"]
+    assert shots.loc[2, "rebound_seconds"] == 2
     assert shots.loc[4, "is_rush"] and not shots.loc[2, "is_rush"]
     assert shots.loc[4, "is_goal"] and shots.loc[4, "score_state"] == 0  # score before the goal
     assert shots.loc[5, "score_state"] == -1 and shots.loc[5, "x_norm"] == 80

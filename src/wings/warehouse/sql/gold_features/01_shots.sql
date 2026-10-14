@@ -25,6 +25,12 @@ shots as (
         case when attacks_left(is_home, home_defending_side, x) then -x else x end as x_norm,
         case when attacks_left(is_home, home_defending_side, x) then -y else y end as y_norm,
         game_seconds - prev_game_seconds as seconds_since_prev,
+        -- zoneCode is recorded from the event owner's perspective, except blocked shots: their
+        -- owner is the shooting team but the zone is the blocker's (91% are coded 'D').
+        case
+            when (prev_team_id = team_id) <> (prev_event_type = 'blocked-shot') then prev_zone_code
+            else flip_zone(prev_zone_code)
+        end as prev_zone_relative,
         case when is_home then home_goals_before - away_goals_before
             else away_goals_before - home_goals_before end as score_diff
     from ordered
@@ -51,18 +57,23 @@ select
     shot_distance(x_norm, y_norm) as distance,
     shot_angle(x_norm, y_norm) as angle,
     shot_type_group(shot_type) as shot_type,
+    -- Rebound: the goalie just faced (or the net just denied) a shot by the same team.
+    -- Blocked shots are excluded: they never reach the goalie.
     coalesce(
         prev_period = period and seconds_since_prev <= 3
-        and (
-            (prev_event_type in ('shot-on-goal', 'missed-shot') and prev_team_id = team_id)
-            or prev_event_type = 'blocked-shot'
-        ),
+        and prev_event_type in ('shot-on-goal', 'missed-shot') and prev_team_id = team_id,
         false
     ) as is_rebound,
+    case
+        when prev_period = period and seconds_since_prev <= 3
+            and prev_event_type in ('shot-on-goal', 'missed-shot') and prev_team_id = team_id
+        then seconds_since_prev
+    end as rebound_seconds,
+    -- Rush: the puck was in the shooter's neutral/defensive zone within 4 seconds and the shot
+    -- comes from inside the offensive blue line (filters out long dump-ins after faceoffs).
     coalesce(
-        prev_period = period and seconds_since_prev <= 4
-        and (case when prev_team_id = team_id then prev_zone_code
-            else flip_zone(prev_zone_code) end) in ('N', 'D'),
+        prev_period = period and seconds_since_prev <= 4 and x_norm >= 25
+        and prev_zone_relative in ('N', 'D'),
         false
     ) as is_rush,
     situation_code,
@@ -76,8 +87,9 @@ comment on table gold.shots is 'Unblocked shot attempts with xG features. Coordi
 comment on column gold.shots.shot_id is 'Surrogate key: game_id * 1e8 + event_id (NHL event ids reach the millions).';
 comment on column gold.shots.distance is 'Feet from the attacked goal at (89, 0).';
 comment on column gold.shots.angle is 'Degrees off the line through the center of the net; >90 means behind the goal line.';
-comment on column gold.shots.is_rebound is 'Previous event was a shot attempt within 3 seconds in the same period.';
-comment on column gold.shots.is_rush is 'Previous event was in the neutral or defensive zone (shooter perspective) within 4 seconds.';
+comment on column gold.shots.is_rebound is 'Same team had a shot on goal or miss within the previous 3 seconds of the same period.';
+comment on column gold.shots.rebound_seconds is 'Seconds since the shot being rebounded (null if not a rebound). 0-1s jam plays score far less than 2-3s rebounds.';
+comment on column gold.shots.is_rush is 'Previous event within 4s was in the shooter''s neutral/defensive zone, and the shot is from inside the offensive blue line.';
 comment on column gold.shots.manpower is '5v5, PP, SH, or other (4v4, 3v3, extra attacker), shooter perspective.';
 comment on column gold.shots.score_state is 'Shooter score differential before the shot, clipped to [-2, 2].';
 comment on column gold.shots.is_empty_net is 'Opponent goalie not in net. Excluded from the xG model.';
