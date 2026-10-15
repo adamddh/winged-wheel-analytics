@@ -92,6 +92,7 @@ header[data-testid="stHeader"] { background: transparent; }
   padding: .35rem .6rem;
   border-bottom: 2px solid var(--ink); }
 .ww-table td { text-align: right; padding: .4rem .6rem; border-bottom: 1px solid var(--line); }
+.ww-scroll { overflow-x: auto; max-width: 100%; }
 .ww-table .t { text-align: left; }
 .ww-table td.t:first-child { white-space: nowrap; }
 .ww-half svg { max-width: 340px; }
@@ -114,8 +115,10 @@ header[data-testid="stHeader"] { background: transparent; }
 .ww-foot a, .ww-caption a { color: var(--ink); }
 [data-baseweb="tab-list"] { gap: 1.4rem; }
 [data-baseweb="tab"] p { font-stretch: 75%; font-weight: 700; font-size: 1.1rem; }
-@media (max-width: 640px) { .ww-num { font-size: 4.5rem; } .ww-stats { grid-template-columns:
-  repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .ww-num { font-size: 4.5rem; }
+  .ww-table th, .ww-table td { padding: .35rem .4rem; font-size: .88rem; }
+  .ww-chances :is(th, td):is(:nth-child(4), :nth-child(5), :nth-child(7)) { display: none; }
+  .ww-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style>
 """
 )
@@ -145,7 +148,7 @@ def fmt(v, spec: str = ".1f", empty: str = "–") -> str:
     return empty if v is None or pd.isna(v) else format(v, spec)
 
 
-def table_html(rows: list[list], header: list[str], text_cols: int = 1) -> str:
+def table_html(rows: list[list], header: list[str], text_cols: int = 1, cls: str = "") -> str:
     """The first `text_cols` columns are left-aligned text; the rest are right-aligned numbers."""
 
     def cell(tag: str, i: int, v) -> str:
@@ -156,7 +159,9 @@ def table_html(rows: list[list], header: list[str], text_cols: int = 1) -> str:
     body = "".join(
         "<tr>" + "".join(cell("td", i, c) for i, c in enumerate(r)) + "</tr>" for r in rows
     )
-    return f'<table class="ww-table"><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table>'
+    table = f'<table class="ww-table"><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table>'
+    # wide tables scroll inside their own box instead of widening the page on phones
+    return f'<div class="ww-scroll {cls}">{table}</div>'
 
 
 # --------------------------------------------------------------------------- rink
@@ -513,13 +518,13 @@ with tab_season:
         st.html(
             table_html(
                 rows,
-                ["Situation", "xG for", "Goals for", "xG against", "Goals against", "xG share"],
+                ["Situation", "xGF", "GF", "xGA", "GA", "xGF%"],
             )
         )
         st.html(
-            '<p class="ww-caption">On the power play the useful numbers are xG for and goals '
-            "for; shorthanded, xG against and goals against. The share column is most "
-            "meaningful at 5 on 5.</p>"
+            '<p class="ww-caption">xGF and xGA are expected goals for and against; GF and GA '
+            "are the goals actually scored on those shots. On the power play read xGF and GF, "
+            "shorthanded read xGA and GA; the xGF% share is most meaningful at 5 on 5.</p>"
         )
     with right:
         st.html('<h2 class="ww-h2">Where Detroit sits in the league</h2>')
@@ -589,6 +594,7 @@ with tab_games:
             rows,
             ["Time", "Team", "Shooter", "Shot", "Situation", "Result", "Distance", "xG"],
             text_cols=6,
+            cls="ww-chances",
         )
     )
 
