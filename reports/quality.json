@@ -1,6 +1,6 @@
 {
   "base": {
-    "checked_at": "2026-10-19T18:26:46+00:00",
+    "checked_at": "2026-10-20T16:28:39+00:00",
     "results": [
       {
         "name": "20242025: >= 1300 completed games",
@@ -39,8 +39,8 @@
         "category": "completeness",
         "sql": "select count(*) from silver.games g where g.game_state = 'OFF' and g.season in (20252026, 20262027) and 'DET' in (g.home_team, g.away_team) and not exists (select 1 from silver.shifts s where s.game_id = g.game_id)",
         "severity": "warn",
-        "violations": 3,
-        "passed": false
+        "violations": 0,
+        "passed": true
       },
       {
         "name": "current-season schedule refreshed within 36h",
@@ -197,7 +197,7 @@
     ]
   },
   "marts": {
-    "checked_at": "2026-10-19T18:26:49+00:00",
+    "checked_at": "2026-10-20T16:28:41+00:00",
     "results": [
       {
         "name": "xG within [0, 1]",
