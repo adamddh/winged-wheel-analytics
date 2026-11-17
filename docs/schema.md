@@ -10,13 +10,13 @@ Raw payloads exactly as ingested (replayable source of truth).
 
 Raw MoneyPuck shot-level CSVs (moneypuck.com/data.htm), all text.
 
-~146,875 rows
+~147,049 rows
 
 ### `bronze.nhl_pbp`
 
 Raw play-by-play payloads from api-web.nhle.com/v1/gamecenter/{id}/play-by-play.
 
-~2,954 rows
+~2,956 rows
 
 ### `bronze.nhl_rosters`
 
@@ -28,7 +28,7 @@ Raw team roster payloads from api-web.nhle.com/v1/roster/{team}/{season}.
 
 Raw weekly schedule payloads from api-web.nhle.com/v1/schedule/{date}.
 
-~72 rows
+~73 rows
 
 ### `bronze.nhl_shifts`
 
@@ -44,7 +44,7 @@ Cleaned, typed, deduplicated entities.
 
 Players dressed per game (from play-by-play rosterSpots). Source of games played.
 
-~118,151 rows
+~118,231 rows
 
 | column | type | description |
 |---|---|---|
@@ -62,7 +62,7 @@ Players dressed per game (from play-by-play rosterSpots). Source of games played
 
 Regular-season games (scheduled and completed), deduplicated on game_id. game_state OFF = official final.
 
-~3,008 rows
+~3,059 rows
 
 | column | type | description |
 |---|---|---|
@@ -84,7 +84,7 @@ Regular-season games (scheduled and completed), deduplicated on game_id. game_st
 
 MoneyPuck unblocked shot attempts with their public xG (mp_xg), regular season only.
 
-~139,220 rows
+~139,635 rows
 
 | column | type | description |
 |---|---|---|
@@ -121,7 +121,7 @@ Player dimension: latest known name, position and number per player_id.
 
 Play-by-play events, one row per (game_id, event_id). game_seconds counts from opening faceoff.
 
-~939,840 rows
+~940,506 rows
 
 | column | type | description |
 |---|---|---|
@@ -275,7 +275,7 @@ Skater season stats: scoring, individual xG (ixg), and where shift data exists, 
 
 Model xG per scored shot (see models/xg_model.json).
 
-~249,780 rows
+~249,952 rows
 
 | column | type | description |
 |---|---|---|
@@ -286,7 +286,7 @@ Model xG per scored shot (see models/xg_model.json).
 
 Unblocked shot attempts with xG features. Coordinates normalized so the shooter attacks the net at (89, 0).
 
-~251,950 rows
+~252,124 rows
 
 | column | type | description |
 |---|---|---|
@@ -321,7 +321,7 @@ Unblocked shot attempts with xG features. Coordinates normalized so the shooter 
 
 gold.shots joined to model xG (non-empty-net, located shots only) plus team, opponent and shooter names.
 
-~249,780 rows
+~249,952 rows
 
 | column | type | description |
 |---|---|---|
@@ -361,7 +361,7 @@ gold.shots joined to model xG (non-empty-net, located shots only) plus team, opp
 
 Per team, game and strength (5v5/PP/SH/other from that team's bench): unblocked shots, xG and goals for/against.
 
-~22,364 rows
+~22,380 rows
 
 | column | type | description |
 |---|---|---|
@@ -383,7 +383,7 @@ Per team, game and strength (5v5/PP/SH/other from that team's bench): unblocked 
 
 One row per team per completed game: result, scoreboard, and xG/goals for and against (all situations and 5v5).
 
-~5,908 rows
+~5,912 rows
 
 | column | type | description |
 |---|---|---|
@@ -439,7 +439,7 @@ Team season totals by strength (5v5, PP, SH, other, all). finishing_above_xg = G
 
 Team-game xGF from our model next to MoneyPuck's xGF for the same games.
 
-~3,274 rows
+~3,284 rows
 
 | column | type | description |
 |---|---|---|
