@@ -1,6 +1,6 @@
 {
   "base": {
-    "checked_at": "2026-11-17T20:32:32+00:00",
+    "checked_at": "2026-11-18T20:05:10+00:00",
     "results": [
       {
         "name": "20242025: >= 1300 completed games",
@@ -197,7 +197,7 @@
     ]
   },
   "marts": {
-    "checked_at": "2026-11-17T20:32:33+00:00",
+    "checked_at": "2026-11-18T20:05:12+00:00",
     "results": [
       {
         "name": "xG within [0, 1]",
