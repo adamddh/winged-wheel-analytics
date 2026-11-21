@@ -84,7 +84,7 @@ Regular-season games (scheduled and completed), deduplicated on game_id. game_st
 
 MoneyPuck unblocked shot attempts with their public xG (mp_xg), regular season only.
 
-~141,471 rows
+~141,907 rows
 
 | column | type | description |
 |---|---|---|
@@ -439,7 +439,7 @@ Team season totals by strength (5v5, PP, SH, other, all). finishing_above_xg = G
 
 Team-game xGF from our model next to MoneyPuck's xGF for the same games.
 
-~3,328 rows
+~3,338 rows
 
 | column | type | description |
 |---|---|---|
